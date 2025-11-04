@@ -1,0 +1,53 @@
+=== UNIVERSITY EXAM TIMETABLE SCHEDULING SYSTEM ===
+Graph Coloring Algorithm Application
+
+=== Building Conflict Graph ===
+Conflict graph built successfully!
+
+Course Conflict Summary:
+Data Structures: 7 conflicts
+Algorithms: 7 conflicts
+Database Systems: 6 conflicts
+Operating Systems: 5 conflicts
+Computer Networks: 6 conflicts
+Software Engineering: 6 conflicts
+Web Development: 5 conflicts
+Machine Learning: 6 conflicts
+
+=== ALGORITHM PERFORMANCE COMPARISON ===
+
+Algorithm            Slots Needed    Time (ms)      
+-----------------------------------------------------
+Greedy               5               0.004000       
+Welsh-Powell         5               0.004000       
+DSATUR               5               0.007000       
+-----------------------------------------------------
+
+=== Greedy Coloring Results ===
+Total Exam Slots Needed: 5
+
+Slot 1: Data Structures
+Slot 2: Algorithms
+Slot 3: Database Systems, Operating Systems
+Slot 4: Computer Networks, Software Engineering
+Slot 5: Web Development, Machine Learning
+
+
+=== Welsh-Powell Results ===
+Total Exam Slots Needed: 5
+
+Slot 1: Data Structures
+Slot 2: Algorithms
+Slot 3: Database Systems, Operating Systems
+Slot 4: Computer Networks, Software Engineering
+Slot 5: Web Development, Machine Learning
+
+
+=== DSATUR Results ===
+Total Exam Slots Needed: 5
+
+Slot 1: Data Structures
+Slot 2: Algorithms
+Slot 3: Database Systems, Operating Systems
+Slot 4: Computer Networks, Software Engineering
+Slot 5: Web Development, Machine Learning

@@ -1,0 +1,232 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <limits.h>
+#include <string.h>
+
+#define MAX_NODES 50
+#define INF INT_MAX
+
+typedef struct {
+    int nodes;
+    int stages;
+    int graph[MAX_NODES][MAX_NODES];
+    char nodeNames[MAX_NODES][50];
+} MultiStageGraph;
+
+// Structure to store the optimal path
+typedef struct {
+    int cost;
+    int path[MAX_NODES];
+    int pathLength;
+} Route;
+
+// Initialize graph
+MultiStageGraph* createGraph(int nodes, int stages) {
+    MultiStageGraph *g = (MultiStageGraph*)malloc(sizeof(MultiStageGraph));
+    g->nodes = nodes;
+    g->stages = stages;
+    
+    // Initialize adjacency matrix with INF
+    for (int i = 0; i < nodes; i++) {
+        for (int j = 0; j < nodes; j++) {
+            g->graph[i][j] = INF;
+        }
+    }
+    
+    return g;
+}
+
+// Add edge to graph
+void addEdge(MultiStageGraph *g, int src, int dest, int cost) {
+    g->graph[src][dest] = cost;
+}
+
+// Set node name
+void setNodeName(MultiStageGraph *g, int node, const char *name) {
+    strcpy(g->nodeNames[node], name);
+}
+
+// Dynamic Programming approach to find shortest path in multistage graph
+Route findOptimalRoute(MultiStageGraph *g, int source, int destination) {
+    Route result;
+    int dist[MAX_NODES];
+    int parent[MAX_NODES];
+    
+    // Initialize distances and parent array
+    for (int i = 0; i < g->nodes; i++) {
+        dist[i] = INF;
+        parent[i] = -1;
+    }
+    
+    dist[destination] = 0;
+    
+    printf("\n=== Computing Optimal Route ===\n");
+    printf("Using Dynamic Programming for Multistage Graph\n\n");
+    
+    // Dynamic Programming: Backward approach
+    // Process nodes from destination to source
+    for (int i = g->nodes - 2; i >= 0; i--) {
+        dist[i] = INF;
+        
+        // Check all possible next nodes
+        for (int j = i + 1; j < g->nodes; j++) {
+            if (g->graph[i][j] != INF && dist[j] != INF) {
+                int newDist = g->graph[i][j] + dist[j];
+                if (newDist < dist[i]) {
+                    dist[i] = newDist;
+                    parent[i] = j;
+                }
+            }
+        }
+    }
+    
+    // Reconstruct path
+    result.cost = dist[source];
+    result.pathLength = 0;
+    
+    int current = source;
+    while (current != -1) {
+        result.path[result.pathLength++] = current;
+        current = parent[current];
+    }
+    
+    return result;
+}
+
+// Print the route details
+void printRoute(MultiStageGraph *g, Route route) {
+    printf("\n=== OPTIMAL DELIVERY ROUTE ===\n");
+    printf("Total Cost/Time: %d units\n", route.cost);
+    printf("Number of Hops: %d\n", route.pathLength);
+    printf("\nRoute Path:\n");
+    printf("--------------------------------------------------\n");
+    
+    for (int i = 0; i < route.pathLength; i++) {
+        int node = route.path[i];
+        printf("Stage %d: %s (Node %d)", i + 1, g->nodeNames[node], node);
+        
+        if (i < route.pathLength - 1) {
+            int next = route.path[i + 1];
+            int cost = g->graph[node][next];
+            printf(" --[Cost: %d]--> ", cost);
+        }
+        printf("\n");
+    }
+    printf("--------------------------------------------------\n");
+}
+
+// Batch processing for multiple deliveries
+void batchProcessing(MultiStageGraph *g, int requests[][2], int numRequests) {
+    printf("\n=== BATCH PROCESSING ===\n");
+    printf("Processing %d delivery requests...\n", numRequests);
+    
+    int totalCost = 0;
+    
+    for (int i = 0; i < numRequests; i++) {
+        int src = requests[i][0];
+        int dest = requests[i][1];
+        
+        printf("\n--- Request %d: From %s to %s ---\n", 
+               i + 1, g->nodeNames[src], g->nodeNames[dest]);
+        
+        Route route = findOptimalRoute(g, src, dest);
+        
+        if (route.cost != INF) {
+            printf("Cost: %d units\n", route.cost);
+            printf("Path: ");
+            for (int j = 0; j < route.pathLength; j++) {
+                printf("%s", g->nodeNames[route.path[j]]);
+                if (j < route.pathLength - 1) printf(" -> ");
+            }
+            printf("\n");
+            totalCost += route.cost;
+        } else {
+            printf("No route available!\n");
+        }
+    }
+    
+    printf("\n=== Batch Summary ===\n");
+    printf("Total Requests: %d\n", numRequests);
+    printf("Total Cost: %d units\n", totalCost);
+}
+
+int main() {
+    printf("=== SwiftCargo Logistics Optimization System ===\n");
+    printf("Multi-Stage Graph for Package Delivery\n\n");
+    
+    // Create a multistage graph with 12 nodes and 4 stages
+    // Stages: Source Warehouse -> Transit Hub 1 -> Transit Hub 2 -> Destination
+    int numNodes = 12;
+    int numStages = 4;
+    
+    MultiStageGraph *g = createGraph(numNodes, numStages);
+    
+    // Set node names
+    setNodeName(g, 0, "Source Warehouse");
+    setNodeName(g, 1, "Transit Hub A1");
+    setNodeName(g, 2, "Transit Hub A2");
+    setNodeName(g, 3, "Transit Hub A3");
+    setNodeName(g, 4, "Transit Hub B1");
+    setNodeName(g, 5, "Transit Hub B2");
+    setNodeName(g, 6, "Transit Hub B3");
+    setNodeName(g, 7, "Transit Hub B4");
+    setNodeName(g, 8, "Distribution C1");
+    setNodeName(g, 9, "Distribution C2");
+    setNodeName(g, 10, "Distribution C3");
+    setNodeName(g, 11, "Final Destination");
+    
+    // Stage 1 to Stage 2 (Source to Transit Hub 1)
+    addEdge(g, 0, 1, 4);   // Source -> A1: 4 units
+    addEdge(g, 0, 2, 2);   // Source -> A2: 2 units
+    addEdge(g, 0, 3, 3);   // Source -> A3: 3 units
+    
+    // Stage 2 to Stage 3 (Transit Hub 1 to Transit Hub 2)
+    addEdge(g, 1, 4, 6);   // A1 -> B1: 6 units
+    addEdge(g, 1, 5, 8);   // A1 -> B2: 8 units
+    addEdge(g, 2, 4, 5);   // A2 -> B1: 5 units
+    addEdge(g, 2, 5, 3);   // A2 -> B2: 3 units
+    addEdge(g, 2, 6, 7);   // A2 -> B3: 7 units
+    addEdge(g, 3, 5, 4);   // A3 -> B2: 4 units
+    addEdge(g, 3, 6, 6);   // A3 -> B3: 6 units
+    addEdge(g, 3, 7, 8);   // A3 -> B4: 8 units
+    
+    // Stage 3 to Stage 4 (Transit Hub 2 to Distribution Centers)
+    addEdge(g, 4, 8, 5);   // B1 -> C1: 5 units
+    addEdge(g, 4, 9, 7);   // B1 -> C2: 7 units
+    addEdge(g, 5, 8, 4);   // B2 -> C1: 4 units
+    addEdge(g, 5, 9, 3);   // B2 -> C2: 3 units
+    addEdge(g, 6, 9, 6);   // B3 -> C2: 6 units
+    addEdge(g, 6, 10, 4);  // B3 -> C3: 4 units
+    addEdge(g, 7, 10, 5);  // B4 -> C3: 5 units
+    
+    // Stage 4 to Final Destination
+    addEdge(g, 8, 11, 3);  // C1 -> Destination: 3 units
+    addEdge(g, 9, 11, 2);  // C2 -> Destination: 2 units
+    addEdge(g, 10, 11, 4); // C3 -> Destination: 4 units
+    
+    // Find optimal route from source to destination
+    Route optimalRoute = findOptimalRoute(g, 0, 11);
+    printRoute(g, optimalRoute);
+    
+    // Demonstrate dynamic update (e.g., traffic delay)
+    printf("\n\n=== REAL-TIME UPDATE ===\n");
+    printf("Traffic delay detected on route A2 -> B2\n");
+    printf("Updating cost from 3 to 10 units\n");
+    addEdge(g, 2, 5, 10);
+    
+    Route updatedRoute = findOptimalRoute(g, 0, 11);
+    printRoute(g, updatedRoute);
+    
+    // Batch processing demonstration
+    int deliveryRequests[][2] = {
+        {0, 11},  // Full route
+        {0, 11},  // Another delivery
+        {0, 11}   // Third delivery
+    };
+    
+    batchProcessing(g, deliveryRequests, 3);
+    
+    free(g);
+    
+    return 0;
+}

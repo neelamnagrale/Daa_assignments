@@ -1,0 +1,99 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct {
+    char name[50];
+    double weight;
+    double utility;
+    double ratio;
+} ReliefItem;
+
+// Comparison function for sorting by ratio (descending)
+int compareRatio(const void *a, const void *b) {
+    ReliefItem *item1 = (ReliefItem *)a;
+    ReliefItem *item2 = (ReliefItem *)b;
+    
+    if (item2->ratio > item1->ratio) return 1;
+    if (item2->ratio < item1->ratio) return -1;
+    return 0;
+}
+
+double fractionalKnapsack(ReliefItem items[], int n, double capacity) {
+    qsort(items, n, sizeof(ReliefItem), compareRatio);
+    
+    double totalUtility = 0.0;
+    double remainingCapacity = capacity;
+    
+    printf("\nItems loaded in the boat:\n");
+    printf("%-20s %-10s %-10s %-10s %-10s\n", 
+           "Item", "Weight", "Utility", "Amount", "Value");
+    
+    for (int i = 0; i < n; i++) {
+        if (remainingCapacity == 0) break;
+        
+        if (items[i].weight <= remainingCapacity) {
+            // Take the whole item
+            totalUtility += items[i].utility;
+            remainingCapacity -= items[i].weight;
+            printf("%-20s %-10.1f %-10.1f %-10s %-10.1f\n",
+                   items[i].name, items[i].weight, items[i].utility, 
+                   "Full", items[i].utility);
+        } else {
+            // Take fraction of the item
+            double fraction = remainingCapacity / items[i].weight;
+            double partialUtility = items[i].utility * fraction;
+            totalUtility += partialUtility;
+            printf("%-20s %-10.1f %-10.1f %-10.2f %-10.1f\n",
+                   items[i].name, items[i].weight, items[i].utility, 
+                   fraction, partialUtility);
+            remainingCapacity = 0;
+        }
+    }
+    
+    return totalUtility;
+}
+
+int main() {
+    double capacity;
+    
+    printf("=== Emergency Relief Supply Distribution ===\n\n");
+    
+    // Sample relief items
+    ReliefItem items[] = {
+        {"Medical Kits", 15.0, 150.0, 0},
+        {"Drinking Water", 30.0, 90.0, 0},
+        {"Food Packets", 25.0, 100.0, 0},
+        {"Medicines", 10.0, 120.0, 0},
+        {"Blankets", 20.0, 60.0, 0},
+        {"First Aid", 5.0, 75.0, 0}
+    };
+    
+    int n = sizeof(items) / sizeof(items[0]);
+    
+    // Calculate ratio for each item
+    for (int i = 0; i < n; i++) {
+        items[i].ratio = items[i].utility / items[i].weight;
+    }
+    
+    printf("Enter boat capacity (kg): ");
+    scanf("%lf", &capacity);
+    
+    printf("\nAvailable Relief Items:\n");
+    
+    printf("%-20s %-10s %-10s %-10s\n", "Item", "Weight", "Utility", "Ratio");
+ 
+    
+    for (int i = 0; i < n; i++) {
+        printf("%-20s %-10.1f %-10.1f %-10.2f\n",
+               items[i].name, items[i].weight, items[i].utility, items[i].ratio);
+    }
+    
+    double maxUtility = fractionalKnapsack(items, n, capacity);
+    
+   
+    printf("\nMaximum Utility Value: %.2f\n", maxUtility);
+    printf("\n=== Relief distribution optimized successfully! ===\n");
+    
+    return 0;
+}

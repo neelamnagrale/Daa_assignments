@@ -1,0 +1,31 @@
+=== DISASTER RELIEF RESOURCE ALLOCATION SYSTEM ===
+0/1 Knapsack Problem - Earthquake Relief Operation
+
+Available Relief Items: 12
+Truck Capacity: 50 kg
+
+=== DYNAMIC PROGRAMMING (OPTIMAL) ===
+
+=== Dynamic Programming Results ===
+Total Utility Value: 595
+Total Weight: 90 kg
+Items Loaded: 12
+
+Item Name                 Weight     Utility    Priority  
+----------------------------------------------------------------
+Medical Gloves            1          30         Critical  
+Canned Food               12         65         High      
+Batteries                 3          45         Normal    
+Flashlights               2          40         Normal    
+Tents                     20         85         Normal    
+Blankets                  7          50         Normal    
+Drinking Water            15         75         High      
+Food Packets              10         60         High      
+Antibiotics               4          95         Critical  
+First Aid Kits            3          70         Critical  
+IV Fluids                 8          90         Critical  
+Emergency Medicine        5          100        Critical  
+----------------------------------------------------------------
+
+Execution Time: 0.012000 ms
+Time Complexity: O(n * W) = O(12 * 50) = O(600)

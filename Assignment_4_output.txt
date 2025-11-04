@@ -1,0 +1,48 @@
+=== Smart Traffic Management System ===
+City Road Network with 9 intersections
+
+Ambulance Location: Intersection 0
+Hospital Location: Intersection 4
+
+=== Dijkstra's Algorithm Execution ===
+Finding shortest path from intersection 0 to hospital 4
+
+Shortest Distances from Ambulance (Node 0):
+Intersection	Distance (min)	Path
+0		0		0
+1		4		0 -> 1
+2		12		0 -> 1 -> 2
+3		19		0 -> 1 -> 2 -> 3
+4		21		0 -> 7 -> 6 -> 5 -> 4
+5		11		0 -> 7 -> 6 -> 5
+6		9		0 -> 7 -> 6
+7		8		0 -> 7
+8		14		0 -> 1 -> 2 -> 8
+
+=== OPTIMAL ROUTE TO HOSPITAL ===
+Destination: Hospital at Intersection 4
+Total Travel Time: 21 minutes
+Optimal Path: 0 -> 7 -> 6 -> 5 -> 4
+
+=== DYNAMIC TRAFFIC UPDATE ===
+Traffic congestion detected! Road 2->5 time increased from 4 to 10 minutes
+
+=== Dijkstra's Algorithm Execution ===
+Finding shortest path from intersection 0 to hospital 4
+
+Shortest Distances from Ambulance (Node 0):
+Intersection	Distance (min)	Path
+0		0		0
+1		4		0 -> 1
+2		12		0 -> 1 -> 2
+3		19		0 -> 1 -> 2 -> 3
+4		21		0 -> 7 -> 6 -> 5 -> 4
+5		11		0 -> 7 -> 6 -> 5
+6		9		0 -> 7 -> 6
+7		8		0 -> 7
+8		14		0 -> 1 -> 2 -> 8
+
+=== OPTIMAL ROUTE TO HOSPITAL ===
+Destination: Hospital at Intersection 4
+Total Travel Time: 21 minutes
+Optimal Path: 0 -> 7 -> 6 -> 5 -> 4

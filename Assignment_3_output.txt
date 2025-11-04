@@ -1,0 +1,22 @@
+=== Emergency Relief Supply Distribution ===
+
+Enter boat capacity (kg): 30
+
+Available Relief Items:
+Item                 Weight     Utility    Ratio     
+Medical Kits         15.0       150.0      10.00     
+Drinking Water       30.0       90.0       3.00      
+Food Packets         25.0       100.0      4.00      
+Medicines            10.0       120.0      12.00     
+Blankets             20.0       60.0       3.00      
+First Aid            5.0        75.0       15.00     
+
+Items loaded in the boat:
+Item                 Weight     Utility    Amount     Value     
+First Aid            5.0        75.0       Full       75.0      
+Medicines            10.0       120.0      Full       120.0     
+Medical Kits         15.0       150.0      Full       150.0     
+
+Maximum Utility Value: 345.00
+
+=== Relief distribution optimized successfully! ===

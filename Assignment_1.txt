@@ -1,0 +1,112 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+// Structure customer order
+typedef struct {
+    int orderId;
+    long long timestamp;  
+
+// Merge function to combine two sorted subarrays
+void merge(Order arr[], int left, int mid, int right) {
+    int n1 = mid - left + 1;
+    int n2 = right - mid;
+    
+    // Create temporary arrays
+    Order *L = (Order*)malloc(n1 * sizeof(Order));
+    Order *R = (Order*)malloc(n2 * sizeof(Order));
+    
+    // Copy data to temp arrays
+    for (int i = 0; i < n1; i++)
+        L[i] = arr[left + i];
+    for (int j = 0; j < n2; j++)
+        R[j] = arr[mid + 1 + j];
+    
+    // Merge the temp arrays back
+    int i = 0, j = 0, k = left;
+    
+    while (i < n1 && j < n2) {
+        if (L[i].timestamp <= R[j].timestamp) {
+            arr[k] = L[i];
+            i++;
+        } else {
+            arr[k] = R[j];
+            j++;
+        }
+        k++;
+    }
+    
+    // Copy remaining elements
+    while (i < n1) {
+        arr[k] = L[i];
+        i++;
+        k++;
+    }
+    
+    while (j < n2) {
+        arr[k] = R[j];
+        j++;
+        k++;
+    }
+    
+    free(L);
+    free(R);
+}
+
+// Merge Sort function
+void mergeSort(Order arr[], int left, int right) {
+    if (left < right) {
+        int mid = left + (right - left) / 2;
+        
+        // Sort first and second halves
+        mergeSort(arr, left, mid);
+        mergeSort(arr, mid + 1, right);
+        
+        // Merge the sorted halves
+        merge(arr, left, mid, right);
+    }
+}
+
+// Function to print orders
+void printOrders(Order arr[], int size) {
+    printf("Order ID\tTimestamp\n");
+    printf("--------------------------------\n");
+    for (int i = 0; i < size; i++) {
+        printf("%d\t\t%lld\n", arr[i].orderId, arr[i].timestamp);
+    }
+}
+
+int main() {
+    int n;
+    
+    printf("Enter number of orders: ");
+    scanf("%d", &n);
+    
+    Order *orders = (Order*)malloc(n * sizeof(Order));
+    
+    // Generate random orders
+    printf("\nGenerating random orders...\n");
+    srand(time(NULL));
+    for (int i = 0; i < n; i++) {
+        orders[i].orderId = i + 1;
+        orders[i].timestamp = 1600000000 + rand() % 100000000;
+    }
+    
+    printf("\nBefore sorting (first 10 orders):\n");
+    printOrders(orders, (n < 10) ? n : 10);
+    
+    // Measure sorting time
+    clock_t start = clock();
+    mergeSort(orders, 0, n - 1);
+    clock_t end = clock();
+    
+    double timeTaken = ((double)(end - start)) / CLOCKS_PER_SEC;
+    
+    printf("\nAfter sorting (first 10 orders):\n");
+    printOrders(orders, (n < 10) ? n : 10);
+    
+    printf("\nTime taken to sort %d orders: %.6f seconds\n", n, timeTaken);
+    
+    free(orders);
+    return 0;
+}

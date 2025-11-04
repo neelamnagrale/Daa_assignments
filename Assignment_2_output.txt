@@ -1,0 +1,30 @@
+StreamFlix Movie Recommendation System
+=======================================
+Enter number of movies: 4
+
+Select sorting parameter:
+1. IMDB Rating (Highest first)
+2. Release Year (Newest first)
+3. Watch Time Popularity (Most watched first)
+Enter choice: 1
+
+Before sorting (first 10 movies):
+ID       Title                          Rating   Year   WatchTime   
+-------------------------------------------------------------------------
+1        Inception_0                    5.5      1992   4288345     
+2        The Matrix_1                   5.1      2024   523884      
+3        Interstellar_2                 8.4      1998   3021304     
+4        The Prestige_3                 6.5      2017   8033914     
+
+After sorting by IMDB Rating (Top 10):
+ID       Title                          Rating   Year   WatchTime   
+-------------------------------------------------------------------------
+3        Interstellar_2                 8.4      1998   3021304     
+4        The Prestige_3                 6.5      2017   8033914     
+1        Inception_0                    5.5      1992   4288345     
+2        The Matrix_1                   5.1      2024   523884      
+
+=== Performance Metrics ===
+Total movies sorted: 4
+Sorting parameter: IMDB Rating
+Time taken: 0.000003 secondss

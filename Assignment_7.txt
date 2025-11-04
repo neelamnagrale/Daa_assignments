@@ -1,0 +1,353 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+#define MAX_COURSES 100
+#define MAX_STUDENTS 1000
+
+typedef struct {
+    int id;
+    char name[50];
+    int students[MAX_STUDENTS];
+    int studentCount;
+} Course;
+
+typedef struct {
+    int vertices;
+    int adjMatrix[MAX_COURSES][MAX_COURSES];
+    int degree[MAX_COURSES];
+    Course courses[MAX_COURSES];
+} Graph;
+
+typedef struct {
+    int courseId;
+    int degree;
+} VertexDegree;
+
+// Create and initialize graph
+Graph* createGraph(int vertices) {
+    Graph *g = (Graph*)malloc(sizeof(Graph));
+    g->vertices = vertices;
+    
+    for (int i = 0; i < vertices; i++) {
+        g->degree[i] = 0;
+        for (int j = 0; j < vertices; j++) {
+            g->adjMatrix[i][j] = 0;
+        }
+    }
+    
+    return g;
+}
+
+// Add edge (conflict between courses)
+void addEdge(Graph *g, int u, int v) {
+    if (u != v && g->adjMatrix[u][v] == 0) {
+        g->adjMatrix[u][v] = 1;
+        g->adjMatrix[v][u] = 1;
+        g->degree[u]++;
+        g->degree[v]++;
+    }
+}
+
+// Build conflict graph based on student enrollments
+void buildConflictGraph(Graph *g) {
+    printf("\n=== Building Conflict Graph ===\n");
+    
+    for (int i = 0; i < g->vertices; i++) {
+        for (int j = i + 1; j < g->vertices; j++) {
+            // Check if any student is enrolled in both courses
+            for (int s1 = 0; s1 < g->courses[i].studentCount; s1++) {
+                for (int s2 = 0; s2 < g->courses[j].studentCount; s2++) {
+                    if (g->courses[i].students[s1] == g->courses[j].students[s2]) {
+                        addEdge(g, i, j);
+                        goto next_pair;
+                    }
+                }
+            }
+            next_pair:;
+        }
+    }
+    
+    printf("Conflict graph built successfully!\n");
+}
+
+// METHOD 1: Greedy Coloring Algorithm
+int greedyColoring(Graph *g, int result[]) {
+    int available[MAX_COURSES];
+    
+    result[0] = 0;
+    
+    for (int i = 1; i < g->vertices; i++)
+        result[i] = -1;
+    
+    for (int i = 0; i < g->vertices; i++)
+        available[i] = 0;
+    
+    for (int u = 1; u < g->vertices; u++) {
+        // Mark colors of adjacent vertices as unavailable
+        for (int i = 0; i < g->vertices; i++) {
+            if (g->adjMatrix[u][i] && result[i] != -1)
+                available[result[i]] = 1;
+        }
+        
+        // Find first available color
+        int color;
+        for (color = 0; color < g->vertices; color++) {
+            if (available[color] == 0)
+                break;
+        }
+        
+        result[u] = color;
+        
+        // Reset available array for next iteration
+        for (int i = 0; i < g->vertices; i++)
+            available[i] = 0;
+    }
+    
+    // Find maximum color used
+    int maxColor = 0;
+    for (int i = 0; i < g->vertices; i++) {
+        if (result[i] > maxColor)
+            maxColor = result[i];
+    }
+    
+    return maxColor + 1;
+}
+
+// METHOD 2: Welsh-Powell Algorithm
+int compareVertexDegree(const void *a, const void *b) {
+    VertexDegree *v1 = (VertexDegree*)a;
+    VertexDegree *v2 = (VertexDegree*)b;
+    return v2->degree - v1->degree;
+}
+
+int welshPowell(Graph *g, int result[]) {
+    VertexDegree vertices[MAX_COURSES];
+    
+    // Sort vertices by degree
+    for (int i = 0; i < g->vertices; i++) {
+        vertices[i].courseId = i;
+        vertices[i].degree = g->degree[i];
+        result[i] = -1;
+    }
+    
+    qsort(vertices, g->vertices, sizeof(VertexDegree), compareVertexDegree);
+    
+    int currentColor = 0;
+    
+    for (int i = 0; i < g->vertices; i++) {
+        if (result[vertices[i].courseId] == -1) {
+            result[vertices[i].courseId] = currentColor;
+            
+            // Color all non-adjacent vertices with same color
+            for (int j = i + 1; j < g->vertices; j++) {
+                int u = vertices[i].courseId;
+                int v = vertices[j].courseId;
+                
+                if (result[v] == -1 && g->adjMatrix[u][v] == 0) {
+                    // Check if v is not adjacent to any already colored vertex with currentColor
+                    int canColor = 1;
+                    for (int k = 0; k < g->vertices; k++) {
+                        if (result[k] == currentColor && g->adjMatrix[v][k]) {
+                            canColor = 0;
+                            break;
+                        }
+                    }
+                    if (canColor)
+                        result[v] = currentColor;
+                }
+            }
+            currentColor++;
+        }
+    }
+    
+    return currentColor;
+}
+
+// METHOD 3: DSATUR Algorithm
+int dsatur(Graph *g, int result[]) {
+    int saturation[MAX_COURSES] = {0};
+    int colored[MAX_COURSES] = {0};
+    int numColored = 0;
+    
+    for (int i = 0; i < g->vertices; i++)
+        result[i] = -1;
+    
+    // Find vertex with maximum degree
+    int maxDegree = 0, firstVertex = 0;
+    for (int i = 0; i < g->vertices; i++) {
+        if (g->degree[i] > maxDegree) {
+            maxDegree = g->degree[i];
+            firstVertex = i;
+        }
+    }
+    
+    result[firstVertex] = 0;
+    colored[firstVertex] = 1;
+    numColored++;
+    
+    while (numColored < g->vertices) {
+        // Update saturation values
+        for (int i = 0; i < g->vertices; i++) {
+            if (!colored[i]) {
+                int uniqueColors[MAX_COURSES] = {0};
+                for (int j = 0; j < g->vertices; j++) {
+                    if (g->adjMatrix[i][j] && result[j] != -1) {
+                        uniqueColors[result[j]] = 1;
+                    }
+                }
+                int sat = 0;
+                for (int k = 0; k < g->vertices; k++)
+                    sat += uniqueColors[k];
+                saturation[i] = sat;
+            }
+        }
+        
+        // Find vertex with maximum saturation (ties broken by degree)
+        int maxSat = -1, nextVertex = -1;
+        for (int i = 0; i < g->vertices; i++) {
+            if (!colored[i]) {
+                if (saturation[i] > maxSat || 
+                   (saturation[i] == maxSat && g->degree[i] > g->degree[nextVertex])) {
+                    maxSat = saturation[i];
+                    nextVertex = i;
+                }
+            }
+        }
+        
+        // Assign smallest available color
+        int available[MAX_COURSES] = {0};
+        for (int i = 0; i < g->vertices; i++) {
+            if (g->adjMatrix[nextVertex][i] && result[i] != -1)
+                available[result[i]] = 1;
+        }
+        
+        int color = 0;
+        while (available[color])
+            color++;
+        
+        result[nextVertex] = color;
+        colored[nextVertex] = 1;
+        numColored++;
+    }
+    
+    int maxColor = 0;
+    for (int i = 0; i < g->vertices; i++) {
+        if (result[i] > maxColor)
+            maxColor = result[i];
+    }
+    
+    return maxColor + 1;
+}
+
+// Print timetable results
+void printTimetable(Graph *g, int colors[], int numColors, const char *method) {
+    printf("\n=== %s Results ===\n", method);
+    printf("Total Exam Slots Needed: %d\n\n", numColors);
+    
+    for (int slot = 0; slot < numColors; slot++) {
+        printf("Slot %d: ", slot + 1);
+        int first = 1;
+        for (int i = 0; i < g->vertices; i++) {
+            if (colors[i] == slot) {
+                if (!first) printf(", ");
+                printf("%s", g->courses[i].name);
+                first = 0;
+            }
+        }
+        printf("\n");
+    }
+    printf("\n");
+}
+
+// Compare algorithms
+void compareAlgorithms(Graph *g) {
+    int greedyResult[MAX_COURSES];
+    int welshResult[MAX_COURSES];
+    int dsaturResult[MAX_COURSES];
+    
+    clock_t start, end;
+    
+    printf("\n=== ALGORITHM PERFORMANCE COMPARISON ===\n\n");
+    printf("%-20s %-15s %-15s\n", "Algorithm", "Slots Needed", "Time (ms)");
+    printf("-----------------------------------------------------\n");
+    
+    // Greedy
+    start = clock();
+    int greedyColors = greedyColoring(g, greedyResult);
+    end = clock();
+    double greedyTime = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
+    printf("%-20s %-15d %-15.6f\n", "Greedy", greedyColors, greedyTime);
+    
+    // Welsh-Powell
+    start = clock();
+    int welshColors = welshPowell(g, welshResult);
+    end = clock();
+    double welshTime = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
+    printf("%-20s %-15d %-15.6f\n", "Welsh-Powell", welshColors, welshTime);
+    
+    // DSATUR
+    start = clock();
+    int dsaturColors = dsatur(g, dsaturResult);
+    end = clock();
+    double dsaturTime = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
+    printf("%-20s %-15d %-15.6f\n", "DSATUR", dsaturColors, dsaturTime);
+    
+    printf("-----------------------------------------------------\n");
+    
+    // Print detailed results
+    printTimetable(g, greedyResult, greedyColors, "Greedy Coloring");
+    printTimetable(g, welshResult, welshColors, "Welsh-Powell");
+    printTimetable(g, dsaturResult, dsaturColors, "DSATUR");
+}
+
+int main() {
+    printf("=== UNIVERSITY EXAM TIMETABLE SCHEDULING SYSTEM ===\n");
+    printf("Graph Coloring Algorithm Application\n");
+    
+    int numCourses = 8;
+    Graph *g = createGraph(numCourses);
+    
+    // Initialize courses
+    strcpy(g->courses[0].name, "Data Structures");
+    strcpy(g->courses[1].name, "Algorithms");
+    strcpy(g->courses[2].name, "Database Systems");
+    strcpy(g->courses[3].name, "Operating Systems");
+    strcpy(g->courses[4].name, "Computer Networks");
+    strcpy(g->courses[5].name, "Software Engineering");
+    strcpy(g->courses[6].name, "Web Development");
+    strcpy(g->courses[7].name, "Machine Learning");
+    
+    // Simulate student enrollments
+    int enrollments[][2] = {
+        {0, 101}, {0, 102}, {0, 103}, {0, 104}, {0, 105},
+        {1, 101}, {1, 102}, {1, 106}, {1, 107},
+        {2, 102}, {2, 103}, {2, 108}, {2, 109},
+        {3, 104}, {3, 105}, {3, 106}, {3, 110},
+        {4, 105}, {4, 107}, {4, 108}, {4, 111},
+        {5, 103}, {5, 106}, {5, 109}, {5, 110},
+        {6, 101}, {6, 107}, {6, 109}, {6, 111},
+        {7, 102}, {7, 104}, {7, 108}, {7, 110}
+    };
+    
+    int numEnrollments = sizeof(enrollments) / sizeof(enrollments[0]);
+    
+    for (int i = 0; i < numEnrollments; i++) {
+        int courseId = enrollments[i][0];
+        int studentId = enrollments[i][1];
+        g->courses[courseId].students[g->courses[courseId].studentCount++] = studentId;
+    }
+    
+    buildConflictGraph(g);
+    
+    printf("\nCourse Conflict Summary:\n");
+    for (int i = 0; i < numCourses; i++) {
+        printf("%s: %d conflicts\n", g->courses[i].name, g->degree[i]);
+    }
+    
+    compareAlgorithms(g);
+    
+    free(g);
+    return 0;
+}

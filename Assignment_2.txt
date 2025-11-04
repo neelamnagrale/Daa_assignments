@@ -1,0 +1,203 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+// Structure to represent a movie
+typedef struct {
+    int movieId;
+    char title[100];
+    float imdbRating;
+    int releaseYear;
+    long long watchTime;  // in minutes
+} Movie;
+
+// Comparison functions for different sorting parameters
+int compareByRating(Movie *a, Movie *b) {
+    if (a->imdbRating > b->imdbRating) return -1;  // Descending
+    if (a->imdbRating < b->imdbRating) return 1;
+    return 0;
+}
+
+int compareByYear(Movie *a, Movie *b) {
+    return b->releaseYear - a->releaseYear;  // Descending (newest first)
+}
+
+int compareByWatchTime(Movie *a, Movie *b) {
+    if (a->watchTime > b->watchTime) return -1;  // Descending
+    if (a->watchTime < b->watchTime) return 1;
+    return 0;
+}
+
+// Generic swap function
+void swap(Movie *a, Movie *b) {
+    Movie temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+// Partition function for Quicksort
+int partition(Movie arr[], int low, int high, int (*compare)(Movie*, Movie*)) {
+    // Choose median-of-three as pivot for better performance
+    int mid = low + (high - low) / 2;
+    
+    // Sort low, mid, high
+    if (compare(&arr[mid], &arr[low]) < 0)
+        swap(&arr[low], &arr[mid]);
+    if (compare(&arr[high], &arr[low]) < 0)
+        swap(&arr[low], &arr[high]);
+    if (compare(&arr[high], &arr[mid]) < 0)
+        swap(&arr[mid], &arr[high]);
+    
+    // Place pivot at high-1
+    swap(&arr[mid], &arr[high - 1]);
+    Movie pivot = arr[high - 1];
+    
+    int i = low;
+    int j = high - 1;
+    
+    while (1) {
+        while (compare(&arr[++i], &pivot) < 0);
+        while (compare(&arr[--j], &pivot) > 0);
+        
+        if (i >= j) break;
+        swap(&arr[i], &arr[j]);
+    }
+    
+    swap(&arr[i], &arr[high - 1]);
+    return i;
+}
+
+// Optimized Quicksort with insertion sort for small subarrays
+void insertionSort(Movie arr[], int low, int high, int (*compare)(Movie*, Movie*)) {
+    for (int i = low + 1; i <= high; i++) {
+        Movie key = arr[i];
+        int j = i - 1;
+        
+        while (j >= low && compare(&arr[j], &key) > 0) {
+            arr[j + 1] = arr[j];
+            j--;
+        }
+        arr[j + 1] = key;
+    }
+}
+
+// Quicksort function with optimizations
+void quickSort(Movie arr[], int low, int high, int (*compare)(Movie*, Movie*)) {
+    // Use insertion sort for small subarrays (optimization)
+    if (high - low < 10) {
+        insertionSort(arr, low, high, compare);
+        return;
+    }
+    
+    if (low < high) {
+        int pi = partition(arr, low, high, compare);
+        
+        // Recursively sort smaller partition first to optimize stack space
+        if (pi - low < high - pi) {
+            quickSort(arr, low, pi - 1, compare);
+            quickSort(arr, pi + 1, high, compare);
+        } else {
+            quickSort(arr, pi + 1, high, compare);
+            quickSort(arr, low, pi - 1, compare);
+        }
+    }
+}
+
+// Function to print movies
+void printMovies(Movie arr[], int size, int limit) {
+    printf("\n%-8s %-30s %-8s %-6s %-12s\n", "ID", "Title", "Rating", "Year", "WatchTime");
+    printf("-------------------------------------------------------------------------\n");
+    for (int i = 0; i < limit && i < size; i++) {
+        printf("%-8d %-30s %-8.1f %-6d %-12lld\n",
+               arr[i].movieId, arr[i].title, arr[i].imdbRating,
+               arr[i].releaseYear, arr[i].watchTime);
+    }
+}
+
+// Generate sample movie data
+void generateMovies(Movie *movies, int n) {
+    char *titles[] = {"Inception", "The Matrix", "Interstellar", "The Prestige", 
+                      "Fight Club", "Pulp Fiction", "The Shawshank Redemption",
+                      "The Dark Knight", "Forrest Gump", "Goodfellas"};
+    
+    for (int i = 0; i < n; i++) {
+        movies[i].movieId = i + 1;
+        sprintf(movies[i].title, "%s_%d", titles[i % 10], i);
+        movies[i].imdbRating = 5.0 + (rand() % 50) / 10.0;
+        movies[i].releaseYear = 1990 + rand() % 35;
+        movies[i].watchTime = 100000 + rand() % 9000000;
+    }
+}
+
+int main() {
+    int n, choice;
+    
+    printf("StreamFlix Movie Recommendation System\n");
+    printf("=======================================\n");
+    printf("Enter number of movies: ");
+    scanf("%d", &n);
+    
+    Movie *movies = (Movie*)malloc(n * sizeof(Movie));
+    
+    if (movies == NULL) {
+        printf("Memory allocation failed!\n");
+        return 1;
+    }
+    
+    // Generate sample data
+    srand(time(NULL));
+    generateMovies(movies, n);
+    
+    printf("\nSelect sorting parameter:\n");
+    printf("1. IMDB Rating (Highest first)\n");
+    printf("2. Release Year (Newest first)\n");
+    printf("3. Watch Time Popularity (Most watched first)\n");
+    printf("Enter choice: ");
+    scanf("%d", &choice);
+    
+    // Select comparison function
+    int (*compareFunc)(Movie*, Movie*);
+    char *sortType;
+    
+    switch(choice) {
+        case 1:
+            compareFunc = compareByRating;
+            sortType = "IMDB Rating";
+            break;
+        case 2:
+            compareFunc = compareByYear;
+            sortType = "Release Year";
+            break;
+        case 3:
+            compareFunc = compareByWatchTime;
+            sortType = "Watch Time";
+            break;
+        default:
+            printf("Invalid choice!\n");
+            free(movies);
+            return 1;
+    }
+    
+    printf("\nBefore sorting (first 10 movies):");
+    printMovies(movies, n, 10);
+    
+    // Measure sorting time
+    clock_t start = clock();
+    quickSort(movies, 0, n - 1, compareFunc);
+    clock_t end = clock();
+    
+    double timeTaken = ((double)(end - start)) / CLOCKS_PER_SEC;
+    
+    printf("\nAfter sorting by %s (Top 10):", sortType);
+    printMovies(movies, n, 10);
+    
+    printf("\n=== Performance Metrics ===\n");
+    printf("Total movies sorted: %d\n", n);
+    printf("Sorting parameter: %s\n", sortType);
+    printf("Time taken: %.6f seconds\n", timeTaken);
+    printf("Average time per movie: %.9f seconds\n", timeTaken / n);
+    
+    free(movies);
+    return 0;
+}
