@@ -1,0 +1,57 @@
+class ExamScheduler:
+    def __init__(self, courses, conflicts):
+        self.courses = courses
+        self.graph = {c: [] for c in courses}
+        for c1, c2 in conflicts:
+            self.graph[c1].append(c2)
+            self.graph[c2].append(c1)
+    
+    def greedy_coloring(self):
+        """Greedy graph coloring algorithm"""
+        result = {}
+        
+        for course in self.courses:
+            # Find colors used by neighbors
+            neighbor_colors = {result[neighbor] 
+                             for neighbor in self.graph[course] 
+                             if neighbor in result}
+            
+            # Assign smallest available color
+            color = 0
+            while color in neighbor_colors:
+                color += 1
+            result[course] = color
+        
+        return result
+    
+    def welsh_powell(self):
+        """Welsh-Powell algorithm (degree-based ordering)"""
+        # Sort by degree (descending)
+        sorted_courses = sorted(self.courses, 
+                               key=lambda c: len(self.graph[c]), 
+                               reverse=True)
+        
+        result = {}
+        for course in sorted_courses:
+            neighbor_colors = {result[neighbor] 
+                             for neighbor in self.graph[course] 
+                             if neighbor in result}
+            color = 0
+            while color in neighbor_colors:
+                color += 1
+            result[course] = color
+        
+        return result
+
+# Example usage
+courses = ['CS101', 'CS102', 'MATH101', 'PHYS101', 'ENG101']
+conflicts = [('CS101', 'CS102'), ('CS101', 'MATH101'), 
+             ('CS102', 'PHYS101'), ('MATH101', 'PHYS101')]
+
+scheduler = ExamScheduler(courses, conflicts)
+schedule = scheduler.welsh_powell()
+
+print("Exam Schedule (Course -> Time Slot):")
+for course, slot in schedule.items():
+    print(f"{course}: Slot {slot}")
+print(f"\nTotal slots needed: {max(schedule.values()) + 1}")

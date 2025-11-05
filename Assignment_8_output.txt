@@ -1,0 +1,8 @@
+Exam Schedule (Course -> Time Slot):
+CS101: Slot 0
+CS102: Slot 1
+MATH101: Slot 1
+PHYS101: Slot 0
+ENG101: Slot 0
+
+Total slots needed: 2
